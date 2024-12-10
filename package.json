@@ -2,6 +2,7 @@
   "name": "event-registration-services",
   "version": "1.0.0",
   "main": "index.js",
+  "type": "module",
   "scripts": {
     "serve": "nodemon src/index.js"
   },
