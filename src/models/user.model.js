@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { ROLE } from "../constant.js";
 
 const userSchema = new mongoose.Schema(
   {
@@ -24,6 +25,11 @@ const userSchema = new mongoose.Schema(
       require: true,
       unique: true,
     },
+    roles:{
+      type: String,
+      require: true,
+      default: [ROLE.USER]
+    }
   },
   { timestamps: true }
 );
