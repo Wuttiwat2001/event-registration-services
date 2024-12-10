@@ -1,11 +1,6 @@
 import User from "../models/user.model.js";
 import bcrypt from "bcrypt";
-import jwt from "jsonwebtoken";
-import { JWT_SECRET } from "../secrets.js";
-
-const createToken = (id) => {
-  return jwt.sign({ id }, JWT_SECRET);
-};
+import generateToken from "../helpers/generateToken.js";
 
 const loginUser = async (req, res) => {
   try {
@@ -22,7 +17,7 @@ const loginUser = async (req, res) => {
       return res.status(400).json({ message: "Invalid credentials" });
     }
 
-    const token = createToken(user._id);
+    const token = generateToken(user._id);
     res
       .status(200)
       .json({ success: true, token, message: "User logged in successfully" });
@@ -57,7 +52,7 @@ const registerUser = async (req, res) => {
     });
 
     const user = await newUser.save();
-    const token = createToken(user._id);
+    const token = generateToken(user._id);
 
     res
       .status(201)
