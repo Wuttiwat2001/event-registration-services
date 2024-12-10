@@ -7,6 +7,30 @@ const createToken = (id) => {
   return jwt.sign({ id }, JWT_SECRET);
 };
 
+const loginUser = async (req, res) => {
+  try {
+    const { username, password } = req.body;
+    const user = await User.findOne({ username });
+
+    if (!user) {
+      return res.status(400).json({ message: "Invalid credentials" });
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password);
+
+    if (!isMatch) {
+      return res.status(400).json({ message: "Invalid credentials" });
+    }
+
+    const token = createToken(user._id);
+    res
+      .status(200)
+      .json({ success: true, token, message: "User logged in successfully" });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 const registerUser = async (req, res) => {
   try {
     const { username, password, firstName, lastName, phone } = req.body;
@@ -35,10 +59,12 @@ const registerUser = async (req, res) => {
     const user = await newUser.save();
     const token = createToken(user._id);
 
-    res.status(201).json({ success: true, token, message: "User registered successfully" });
+    res
+      .status(201)
+      .json({ success: true, token, message: "User registered successfully" });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
 };
 
-export { registerUser };
+export { loginUser, registerUser };
