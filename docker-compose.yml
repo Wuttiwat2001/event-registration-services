@@ -1,0 +1,29 @@
+services:
+  event-registration-services:
+    container_name: event-registration-services
+    image: node:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+    volumes:
+      - .:/app
+    command: npm start
+
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example
+      MONGO_INITDB_DATABASE: event_registration
+    volumes: 
+      - data_event_registration:/data/db
+volumes:
+  data_event_registration:
+    driver: local
+ 
+ 
+    
