@@ -17,6 +17,21 @@ const authMiddleware = async (req, res, next) => {
   }
 };
 
+
+const authorizeMiddleware = (roles) => {
+  return (req, res, next) => {
+    for (let i = 0; i < roles.length; i++) {
+      if (req.user.roles.indexOf(roles[i]) >= 0) {
+        next()
+        return
+      }
+    }
+    res.status(403).json({ message: 'Forbidden' });
+  }
+}
+
+
 export {
-  authMiddleware
+  authMiddleware,
+  authorizeMiddleware
 }
