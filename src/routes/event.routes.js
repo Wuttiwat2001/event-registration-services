@@ -12,7 +12,7 @@ const eventRouter = Router();
 eventRouter.post("/", create);
 eventRouter.get("/", findAll);
 eventRouter.get("/:id", findOne);
-eventRouter.put("/:id", update);
-eventRouter.patch("/:id", remove);
+eventRouter.put("/update/:id", update);
+eventRouter.delete("/remove/:id", remove);
 
 export default eventRouter;
