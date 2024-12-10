@@ -13,6 +13,6 @@ eventRouter.post("/", create);
 eventRouter.get("/", findAll);
 eventRouter.get("/:id", findOne);
 eventRouter.put("/:id", update);
-eventRouter.delete("/:id", remove);
+eventRouter.patch("/:id", remove);
 
 export default eventRouter;

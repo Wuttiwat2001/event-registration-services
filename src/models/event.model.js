@@ -47,6 +47,7 @@ const eventSchema = new mongoose.Schema(
       ref: "user",
       required: true,
     },
+    deletedAt: { type: Date, default: null },
   },
   { timestamps: true }
 );
