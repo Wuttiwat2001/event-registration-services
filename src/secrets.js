@@ -1,8 +1,9 @@
-import dotenv from 'dotenv';
+import dotenv from "dotenv";
 
 dotenv.config();
 
 const PORT = process.env.PORT || 8080;
 const MONGODB_URI = process.env.MONGODB_URI;
+const JWT_SECRET = process.env.JWT_SECRET;
 
-export { PORT, MONGODB_URI };
+export { PORT, MONGODB_URI, JWT_SECRET };
