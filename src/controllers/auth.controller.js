@@ -61,7 +61,7 @@ const registerUser = async (req, res, next) => {
 
     res.status(201).json({ success: true, token, message: "User registered successfully" });
   } catch (error) {
-    next(error); // ส่งข้อผิดพลาดไปยัง error handler
+    next(error);
   }
 };
 
