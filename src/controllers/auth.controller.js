@@ -1,20 +1,22 @@
 import User from "../models/user.model.js";
 import bcrypt from "bcrypt";
 import generateToken from "../helpers/generateToken.js";
+import HttpError from "../utils/HttpError.js";
 
-const loginUser = async (req, res) => {
+const loginUser = async (req, res, next) => {
   try {
     const { username, password } = req.body;
+
     const user = await User.findOne({ username });
 
     if (!user) {
-      return res.status(400).json({ message: "Invalid credentials" });
+      return next(new HttpError(400, "Username or Password is incorrect"));
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
 
     if (!isMatch) {
-      return res.status(400).json({ message: "Invalid credentials" });
+      return next(new HttpError(400, "Username or Password is incorrect"));
     }
 
     const token = generateToken(user._id);
@@ -22,11 +24,11 @@ const loginUser = async (req, res) => {
       .status(200)
       .json({ success: true, token, message: "User logged in successfully" });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    next(error);
   }
 };
 
-const registerUser = async (req, res) => {
+const registerUser = async (req, res, next) => {
   try {
     const { username, password, firstName, lastName, phone } = req.body;
 
@@ -35,9 +37,12 @@ const registerUser = async (req, res) => {
     });
 
     if (existingUser) {
-      return res
-        .status(400)
-        .json({ message: "Username or phone already exists" });
+      if (existingUser.username === username) {
+        throw new HttpError(400, "Username already exists");
+      }
+      if (existingUser.phone === phone) {
+        throw new HttpError(400, "Phone number already exists");
+      }
     }
 
     const salt = await bcrypt.genSalt(10);
@@ -54,11 +59,9 @@ const registerUser = async (req, res) => {
     const user = await newUser.save();
     const token = generateToken(user._id);
 
-    res
-      .status(201)
-      .json({ success: true, token, message: "User registered successfully" });
+    res.status(201).json({ success: true, token, message: "User registered successfully" });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    next(error); // ส่งข้อผิดพลาดไปยัง error handler
   }
 };
 
