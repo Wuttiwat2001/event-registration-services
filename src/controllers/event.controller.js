@@ -1,4 +1,5 @@
 import Event from "../models/event.model.js";
+import mongoose from "mongoose";
 
 const create = async (req, res) => {
   try {
@@ -64,6 +65,13 @@ const findAll = async (req, res) => {
 const findOne = async (req, res) => {
   try {
     const { id } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid event ID" });
+    }
+
     const event = await Event.findById(id).populate(
       "createdBy",
       "firstName lastName"
