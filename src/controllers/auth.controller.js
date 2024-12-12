@@ -20,9 +20,18 @@ const loginUser = async (req, res, next) => {
     }
 
     const token = generateToken(user._id);
-    res
-      .status(200)
-      .json({ success: true, token, message: "User logged in successfully" });
+    res.status(200).json({
+      success: true,
+      token,
+      data: {
+        id: user._id,
+        username: user.username,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        phone: user.phone,
+      },
+      message: "User logged in successfully",
+    });
   } catch (error) {
     next(error);
   }
@@ -59,7 +68,9 @@ const registerUser = async (req, res, next) => {
     const user = await newUser.save();
     const token = generateToken(user._id);
 
-    res.status(201).json({ success: true, token, message: "User registered successfully" });
+    res
+      .status(201)
+      .json({ success: true, token, message: "User registered successfully" });
   } catch (error) {
     next(error);
   }
