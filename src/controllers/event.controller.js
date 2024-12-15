@@ -52,13 +52,41 @@ const create = async (req, res) => {
 
 const findAll = async (req, res) => {
   try {
-    const events = await Event.find({ deletedAt: null }).populate(
-      "createdBy",
-      "firstName lastName"
-    );
-    res.status(200).json({ success: true, data: events });
+    const page = parseInt(req.query.page) || 1;
+    const pageSize = parseInt(req.query.pageSize) || 10;
+    const skip = (page - 1) * pageSize;
+    const search = req.query.search;
+
+    const query = {};
+
+
+
+    if (search) {
+      query.$or = [
+        { title: { $regex: search, $options: "i" } },
+        { location: { $regex: search, $options: "i" } },
+        { description: { $regex: search, $options: "i" } },
+      ];
+    }
+
+    const events = await Event.find(query)
+      .populate("createdBy", "firstName lastName")
+      .limit(pageSize)
+      .skip(skip);
+
+    const total = await Event.countDocuments({});
+
+    res.status(200).json({
+      success: true,
+      data: events,
+      pagination: {
+        total,
+        page,
+        pages: Math.ceil(total / pageSize),
+      },
+    });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    next(error);
   }
 };
 
