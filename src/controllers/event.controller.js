@@ -144,6 +144,10 @@ const update = async (req, res, next) => {
       createdBy
     } = req.body;
 
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return next(new HttpError(400, "Invalid event ID"));
+    }
+
     const event = await Event.findById(id).populate('registeredUsers');
 
     if (!event) {
@@ -185,6 +189,11 @@ const update = async (req, res, next) => {
 const remove = async (req, res, next) => {
   try {
     const { id } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return next(new HttpError(400, "Invalid event ID"));
+    }
+
     const event = await Event.findById(id);
 
     if (!event) {
