@@ -10,7 +10,7 @@ import {
 const eventRouter = Router();
 
 eventRouter.post("/", create);
-eventRouter.get("/", findAll);
+eventRouter.post("/findAll", findAll);
 eventRouter.get("/:id", findOne);
 eventRouter.put("/update/:id", update);
 eventRouter.delete("/remove/:id", remove);

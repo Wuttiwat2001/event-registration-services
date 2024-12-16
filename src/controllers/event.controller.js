@@ -50,28 +50,47 @@ const create = async (req, res) => {
   }
 };
 
-const findAll = async (req, res) => {
+const findAll = async (req, res, next) => {
   try {
-    const page = parseInt(req.query.page) || 1;
-    const pageSize = parseInt(req.query.pageSize) || 10;
+    const page = parseInt(req.body.page) || 1;
+    const pageSize = parseInt(req.body.pageSize) || 10;
     const skip = (page - 1) * pageSize;
-    const search = req.query.search;
-    const startDate = req.query.startDate ? new Date(req.query.startDate) : null;
-    const endDate = req.query.endDate ? new Date(req.query.endDate) : null;
+    const search = req.body.search;
+    const availableSeats = req.body.availableSeats;
+    const createdAtDate = req.body.createdAtDate;
+    const updatedAtDate = req.body.updatedAtDate;
 
     const query = {};
 
-    if (startDate) {
-      startDate.setHours(0, 0, 0, 0);
-    }
-    if (endDate) {
-      endDate.setHours(23, 59, 59, 999); 
-    }
-
-    if (startDate && endDate) {
-      query.createdAt = { $gte: startDate, $lte: endDate };
+    if (availableSeats) {
+      if (availableSeats === "full") {
+        query.remainingSeats = 0;
+      } else if (availableSeats === "available") {
+        query.remainingSeats = { $gt: 0 };
+      }
     }
 
+    if (createdAtDate.length > 0) {
+      const createdAtStart = new Date(createdAtDate[0]);
+      createdAtStart.setHours(0, 0, 0, 0);
+      const createdAtEnd = new Date(createdAtDate[1]);
+      createdAtEnd.setHours(23, 59, 59, 999);
+      query.createdAt = {
+        $gte: createdAtStart,
+        $lt: createdAtEnd,
+      };
+    }
+
+    if (updatedAtDate.length > 0) {
+      const updatedAtStart = new Date(updatedAtDate[0]);
+      updatedAtStart.setHours(0, 0, 0, 0);
+      const updatedAtEnd = new Date(updatedAtDate[1]);
+      updatedAtEnd.setHours(23, 59, 59, 999);
+      query.updatedAt = {
+        $gte: updatedAtStart,
+        $lt: updatedAtEnd,
+      };
+    }
 
     if (search) {
       query.$or = [
@@ -83,10 +102,11 @@ const findAll = async (req, res) => {
 
     const events = await Event.find(query)
       .populate("createdBy", "firstName lastName")
+      .sort({ createdAt: -1 })
       .limit(pageSize)
       .skip(skip);
 
-    const total = await Event.countDocuments({});
+    const total = await Event.countDocuments(query);
 
     res.status(200).json({
       success: true,
