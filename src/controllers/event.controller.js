@@ -182,15 +182,20 @@ const update = async (req, res, next) => {
   }
 };
 
-const remove = async (req, res) => {
+const remove = async (req, res, next) => {
   try {
     const { id } = req.params;
+    const event = await Event.findById(id);
+
+    if (!event) {
+      return next(new HttpError(404, "Event not found."));
+    }
+
     await Event.findByIdAndDelete(id);
-    res
-      .status(200)
-      .json({ success: true, message: "Event deleted successfully" });
+
+    res.status(200).json({ success: true, message: "Event deleted successfully" });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    next(error);
   }
 };
 
