@@ -1,30 +1,21 @@
 import Event from "../models/event.model.js";
 import mongoose from "mongoose";
 
-const create = async (req, res) => {
+const create = async (req, res, next) => {
   try {
     const {
       title,
       description,
-      startDate,
-      endDate,
       location,
       totalSeats,
       remainingSeats,
       createdBy,
     } = req.body;
 
-    if (new Date(startDate) > new Date(endDate)) {
-      return res
-        .status(400)
-        .json({ message: "End date must be after start date" });
-    }
-
     if (remainingSeats > totalSeats) {
-      return res.status(400).json({
-        success: false,
-        message: "Remaining seats cannot exceed total seats.",
-      });
+      return next(
+        new HttpError(400, "Remaining seats cannot exceed total seats.")
+      );
     }
 
     const event = new Event({
@@ -46,7 +37,7 @@ const create = async (req, res) => {
       message: "Event created successfully.",
     });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    next(error);
   }
 };
 
