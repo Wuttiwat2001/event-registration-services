@@ -17,8 +17,8 @@ const eventRouter = Router();
 
 eventRouter.post("/", validateResult, validateCreate, create);
 eventRouter.post("/findAll", findAll);
-eventRouter.get("/:id/registered-users", findRegisteredUsers);
 eventRouter.get("/:id", findOne);
+eventRouter.get("/registered-users/:id", findRegisteredUsers);
 eventRouter.put("/update/:id", validateResult, validateUpdate, update);
 eventRouter.delete("/remove/:id", remove);
 

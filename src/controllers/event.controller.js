@@ -225,25 +225,64 @@ const remove = async (req, res, next) => {
 const findRegisteredUsers = async (req, res, next) => {
   try {
     const { id } = req.params;
+    const page = parseInt(req.query.page) || 1;
+    const pageSize = parseInt(req.query.pageSize) || 10;
+    const skip = (page - 1) * pageSize;
+    const search = req.query.search;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return next(new HttpError(400, "Invalid event ID"));
     }
 
-    const event = await Event.findById(id).populate(
-      "registeredUsers",
-      "firstName lastName email"
-    );
+    const event = await Event.findById(id).populate({
+      path: "registeredUsers",
+      match: search ? { $or: [
+        { firstName: { $regex: search, $options: "i" } },
+        { lastName: { $regex: search, $options: "i" } },
+        { phone: { $regex: search, $options: "i" } }
+      ]} : {},
+      options: {
+        limit: pageSize,
+        skip: skip
+      },
+      select: "firstName lastName phone"
+    });
 
     if (!event) {
       return next(new HttpError(404, "Event not found"));
     }
 
+    const total = await Event.aggregate([
+      { $match: { _id: new mongoose.Types.ObjectId(id) } },
+      { $unwind: "$registeredUsers" },
+      { $lookup: {
+        from: "users",
+        localField: "registeredUsers",
+        foreignField: "_id",
+        as: "registeredUsers"
+      }},
+      { $unwind: "$registeredUsers" },
+      { $match: search ? { $or: [
+        { "registeredUsers.firstName": { $regex: search, $options: "i" } },
+        { "registeredUsers.lastName": { $regex: search, $options: "i" } },
+        { "registeredUsers.phone": { $regex: search, $options: "i" } }
+      ]} : {}},
+      { $count: "total" }
+    ]);
+
+    console.log(event.registeredUsers);
+
     res.status(200).json({
       success: true,
       data: event.registeredUsers,
+      pagination: {
+        total: total[0] ? total[0].total : 0,
+        page,
+        pages: Math.ceil((total[0] ? total[0].total : 0) / pageSize),
+      },
     });
   } catch (error) {
+    console.log(error);
     next(error);
   }
 };
