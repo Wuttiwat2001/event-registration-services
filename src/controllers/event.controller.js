@@ -141,29 +141,41 @@ const update = async (req, res, next) => {
       location,
       totalSeats,
       remainingSeats,
-      createdBy
+      createdBy,
     } = req.body;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return next(new HttpError(400, "Invalid event ID"));
     }
 
-    const event = await Event.findById(id).populate('registeredUsers');
+    const event = await Event.findById(id).populate("registeredUsers");
 
     if (!event) {
       return next(new HttpError(404, "Event not found."));
     }
 
     if (remainingSeats > totalSeats) {
-      return next(new HttpError(400, "Remaining seats cannot exceed total seats."));
+      return next(
+        new HttpError(400, "Remaining seats cannot exceed total seats.")
+      );
     }
 
     if (event.registeredUsers.length > totalSeats) {
-      return next(new HttpError(400, "Total seats cannot be less than the number of registered users."));
+      return next(
+        new HttpError(
+          400,
+          "Total seats cannot be less than the number of registered users."
+        )
+      );
     }
 
     if (event.registeredUsers.length > remainingSeats) {
-      return next(new HttpError(400, "Remaining seats cannot be less than the number of registered users."));
+      return next(
+        new HttpError(
+          400,
+          "Remaining seats cannot be less than the number of registered users."
+        )
+      );
     }
 
     event.title = title;
@@ -202,10 +214,38 @@ const remove = async (req, res, next) => {
 
     await Event.findByIdAndDelete(id);
 
-    res.status(200).json({ success: true, message: "Event deleted successfully" });
+    res
+      .status(200)
+      .json({ success: true, message: "Event deleted successfully" });
   } catch (error) {
     next(error);
   }
 };
 
-export { create, findAll, findOne, update, remove };
+const findRegisteredUsers = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return next(new HttpError(400, "Invalid event ID"));
+    }
+
+    const event = await Event.findById(id).populate(
+      "registeredUsers",
+      "firstName lastName email"
+    );
+
+    if (!event) {
+      return next(new HttpError(404, "Event not found"));
+    }
+
+    res.status(200).json({
+      success: true,
+      data: event.registeredUsers,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export { create, findAll, findOne, update, remove, findRegisteredUsers };
