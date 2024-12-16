@@ -124,7 +124,7 @@ const findOne = async (req, res, next) => {
       "firstName lastName"
     );
     if (!event) {
-      return next(new HttpError(400, "Event not found"));
+      return next(new HttpError(404, "Event not found"));
     }
     res.status(200).json({ success: true, data: event });
   } catch (error) {
@@ -132,7 +132,7 @@ const findOne = async (req, res, next) => {
   }
 };
 
-const update = async (req, res) => {
+const update = async (req, res, next) => {
   try {
     const { id } = req.params;
     const {
@@ -141,31 +141,33 @@ const update = async (req, res) => {
       location,
       totalSeats,
       remainingSeats,
+      createdBy
     } = req.body;
 
-
-    if (remainingSeats > totalSeats) {
-      return res.status(400).json({
-        success: false,
-        message: "Remaining seats cannot exceed total seats.",
-      });
-    }
-
-    const event = await Event.findById(id);
+    const event = await Event.findById(id).populate('registeredUsers');
 
     if (!event) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Event not found" });
+      return next(new HttpError(404, "Event not found."));
+    }
+
+    if (remainingSeats > totalSeats) {
+      return next(new HttpError(400, "Remaining seats cannot exceed total seats."));
+    }
+
+    if (event.registeredUsers.length > totalSeats) {
+      return next(new HttpError(400, "Total seats cannot be less than the number of registered users."));
+    }
+
+    if (event.registeredUsers.length > remainingSeats) {
+      return next(new HttpError(400, "Remaining seats cannot be less than the number of registered users."));
     }
 
     event.title = title;
     event.description = description;
-    event.startDate = startDate;
-    event.endDate = endDate;
     event.location = location;
     event.totalSeats = totalSeats;
     event.remainingSeats = remainingSeats;
+    event.createdBy = createdBy;
 
     const updatedEvent = await event.save();
 
@@ -175,7 +177,8 @@ const update = async (req, res) => {
       message: "Event updated successfully",
     });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    console.log(error);
+    next(error);
   }
 };
 
