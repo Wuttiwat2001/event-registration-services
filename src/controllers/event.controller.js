@@ -21,8 +21,6 @@ const create = async (req, res, next) => {
     const event = new Event({
       title,
       description,
-      startDate,
-      endDate,
       location,
       totalSeats,
       remainingSeats: remainingSeats || totalSeats,
@@ -113,14 +111,12 @@ const findAll = async (req, res, next) => {
   }
 };
 
-const findOne = async (req, res) => {
+const findOne = async (req, res, next) => {
   try {
     const { id } = req.params;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Invalid event ID" });
+      return next(new HttpError(400, "Invalid event ID"));
     }
 
     const event = await Event.findById(id).populate(
@@ -128,13 +124,11 @@ const findOne = async (req, res) => {
       "firstName lastName"
     );
     if (!event) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Event not found" });
+      return next(new HttpError(400, "Event not found"));
     }
     res.status(200).json({ success: true, data: event });
   } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
+    next(error);
   }
 };
 
@@ -144,18 +138,11 @@ const update = async (req, res) => {
     const {
       title,
       description,
-      startDate,
-      endDate,
       location,
       totalSeats,
       remainingSeats,
     } = req.body;
 
-    if (new Date(startDate) > new Date(endDate)) {
-      return res
-        .status(400)
-        .json({ message: "End date must be after start date" });
-    }
 
     if (remainingSeats > totalSeats) {
       return res.status(400).json({
