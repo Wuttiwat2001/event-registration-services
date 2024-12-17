@@ -24,8 +24,14 @@ const eventSchema = new mongoose.Schema(
     },
     registeredUsers: [
       {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "user",
+        user: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "user",
+        },
+        joinDate: {
+          type: Date,
+          default: Date.now,
+        },
       },
     ],
     createdBy: {
