@@ -1,6 +1,7 @@
 import Event from "../models/event.model.js";
 import User from "../models/user.model.js";
 import mongoose from "mongoose";
+import HttpError from "../utils/HttpError.js";
 
 const create = async (req, res, next) => {
   try {
@@ -179,11 +180,11 @@ const update = async (req, res, next) => {
       );
     }
 
-    if (remainingSeats < totalRegisteredUsers) {
+    if (remainingSeats > totalSeats - totalRegisteredUsers) {
       return next(
         new HttpError(
           400,
-          "Remaining seats must not be less than the number of registered users"
+          "Remaining seats must not be more than the available seats after accounting for registered users"
         )
       );
     }
@@ -193,15 +194,6 @@ const update = async (req, res, next) => {
         new HttpError(
           400,
           "Total seats cannot be less than the number of registered users."
-        )
-      );
-    }
-
-    if (event.registeredUsers.length > remainingSeats) {
-      return next(
-        new HttpError(
-          400,
-          "Remaining seats cannot be less than the number of registered users."
         )
       );
     }
@@ -327,7 +319,7 @@ const findRegisteredUsers = async (req, res, next) => {
 const joinEvent = async (req, res, next) => {
   try {
     const { eventId } = req.params;
-    const userId = req.user.id;
+    const userId = req.body.id;
 
     if (!mongoose.Types.ObjectId.isValid(userId)) {
       return next(new HttpError(400, "Invalid event ID"));
