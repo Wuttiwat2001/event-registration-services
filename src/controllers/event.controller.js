@@ -247,12 +247,6 @@ const findRegisteredUsers = async (req, res, next) => {
     const pageSize = parseInt(req.body.pageSize) || 10;
     const skip = (page - 1) * pageSize;
     const search = req.body.search;
-    const joinDateStart = req.body.joinDateStart
-      ? new Date(req.body.joinDateStart)
-      : null;
-    const joinDateEnd = req.body.joinDateEnd
-      ? new Date(req.body.joinDateEnd)
-      : null;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return next(new HttpError(400, "Invalid event ID"));
@@ -265,9 +259,6 @@ const findRegisteredUsers = async (req, res, next) => {
         { lastName: { $regex: search, $options: "i" } },
         { phone: { $regex: search, $options: "i" } },
       ];
-    }
-    if (joinDateStart && joinDateEnd) {
-      match.joinDate = { $gte: joinDateStart, $lte: joinDateEnd };
     }
 
     const event = await Event.findById(id).populate({
@@ -302,9 +293,19 @@ const findRegisteredUsers = async (req, res, next) => {
       { $count: "total" },
     ]);
 
+    const registeredUsers = event.registeredUsers
+      .filter((regUser) => regUser.user)
+      .map((regUser) => ({
+        _id: regUser.user._id,
+        firstName: regUser.user.firstName,
+        lastName: regUser.user.lastName,
+        phone: regUser.user.phone,
+        joinDate: regUser.joinDate,
+      }));
+
     res.status(200).json({
       success: true,
-      data: event.registeredUsers,
+      data: registeredUsers,
       pagination: {
         total: total[0] ? total[0].total : 0,
         page,
