@@ -10,6 +10,7 @@ const create = async (req, res, next) => {
       totalSeats,
       remainingSeats,
       createdBy,
+      registeredUsers
     } = req.body;
 
     if (remainingSeats > totalSeats) {
@@ -24,6 +25,7 @@ const create = async (req, res, next) => {
       location,
       totalSeats,
       remainingSeats: remainingSeats || totalSeats,
+      registeredUsers: registeredUsers || [],
       createdBy,
     });
 
@@ -223,12 +225,12 @@ const remove = async (req, res, next) => {
 };
 
 const findRegisteredUsers = async (req, res, next) => {
-  try {
-    const { id } = req.params;
-    const page = parseInt(req.query.page) || 1;
-    const pageSize = parseInt(req.query.pageSize) || 10;
+  try { 
+    const id = req.body.id;
+    const page = parseInt(req.body.page) || 1;
+    const pageSize = parseInt(req.body.pageSize) || 10;
     const skip = (page - 1) * pageSize;
-    const search = req.query.search;
+    const search = req.body.search;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return next(new HttpError(400, "Invalid event ID"));
@@ -270,8 +272,6 @@ const findRegisteredUsers = async (req, res, next) => {
       { $count: "total" }
     ]);
 
-    console.log(event.registeredUsers);
-
     res.status(200).json({
       success: true,
       data: event.registeredUsers,
@@ -282,7 +282,6 @@ const findRegisteredUsers = async (req, res, next) => {
       },
     });
   } catch (error) {
-    console.log(error);
     next(error);
   }
 };
