@@ -25,8 +25,8 @@ const validateRegister = [
     .matches(/^[A-Za-z]+$/)
     .withMessage("Last name should contain only alphabetic characters"),
   body("phone")
-    .isLength({ min: 10, max: 10 })
+    .isLength({ min: 12, max: 12 })
     .withMessage("Phone number should be exactly 10 digits"),
 ];
 
-export { validateLogin,validateRegister };
+export { validateLogin, validateRegister };

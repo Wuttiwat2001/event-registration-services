@@ -19,6 +19,49 @@ const loginUser = async (req, res, next) => {
       return next(new HttpError(400, "Username or Password is incorrect"));
     }
 
+    if (!user.roles.includes("USER")) {
+      return next(new HttpError(403, "Access denied. Users only."));
+    }
+
+    const token = generateToken(user._id);
+    res.status(200).json({
+      success: true,
+      token,
+      data: {
+        id: user._id,
+        username: user.username,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        phone: user.phone,
+        roles: user.roles,
+      },
+      message: "User logged in successfully",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const loginAdmin = async (req, res, next) => {
+  try {
+    const { username, password } = req.body;
+
+    const user = await User.findOne({ username });
+
+    if (!user) {
+      return next(new HttpError(400, "Username or Password is incorrect"));
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password);
+
+    if (!isMatch) {
+      return next(new HttpError(400, "Username or Password is incorrect"));
+    }
+
+    if (!user.roles.includes("ADMIN")) {
+      return next(new HttpError(403, "Access denied. Admins only."));
+    }
+
     const token = generateToken(user._id);
     res.status(200).json({
       success: true,
@@ -78,4 +121,4 @@ const registerUser = async (req, res, next) => {
   }
 };
 
-export { loginUser, registerUser };
+export { loginUser, loginAdmin, registerUser };
