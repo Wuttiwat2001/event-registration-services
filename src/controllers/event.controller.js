@@ -1,4 +1,5 @@
 import Event from "../models/event.model.js";
+import User from "../models/user.model.js";
 import mongoose from "mongoose";
 
 const create = async (req, res, next) => {
@@ -12,6 +13,11 @@ const create = async (req, res, next) => {
       createdBy,
       registeredUsers,
     } = req.body;
+
+    const user = await User.findById(createdBy);
+    if (!user) {
+      return next(new HttpError(400, "Creator not found."));
+    }
 
     if (remainingSeats > totalSeats) {
       return next(
