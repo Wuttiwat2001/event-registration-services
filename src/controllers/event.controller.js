@@ -93,8 +93,6 @@ const findAll = async (req, res, next) => {
       ];
     }
 
-    console.log(search, query);
-
     const events = await Event.find(query)
       .populate("createdBy", "firstName lastName")
       .sort({ createdAt: -1 })
@@ -147,7 +145,6 @@ const update = async (req, res, next) => {
       location,
       totalSeats,
       remainingSeats,
-      createdBy,
     } = req.body;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
@@ -217,7 +214,6 @@ const update = async (req, res, next) => {
     event.location = location;
     event.totalSeats = totalSeats;
     event.remainingSeats = remainingSeats;
-    event.createdBy = createdBy;
 
     const updatedEvent = await event.save();
 
