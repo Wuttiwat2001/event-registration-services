@@ -10,7 +10,7 @@ const create = async (req, res, next) => {
       totalSeats,
       remainingSeats,
       createdBy,
-      registeredUsers
+      registeredUsers,
     } = req.body;
 
     if (remainingSeats > totalSeats) {
@@ -46,10 +46,10 @@ const findAll = async (req, res, next) => {
     const page = parseInt(req.body.page) || 1;
     const pageSize = parseInt(req.body.pageSize) || 10;
     const skip = (page - 1) * pageSize;
-    const search = req.body.search;
-    const availableSeats = req.body.availableSeats;
-    const createdAtDate = req.body.createdAtDate;
-    const updatedAtDate = req.body.updatedAtDate;
+    const search = req.body.search || "";
+    const availableSeats = req.body.availableSeats || "";
+    const createdAtDate = req.body.createdAtDate || [];
+    const updatedAtDate = req.body.updatedAtDate || [];
 
     const query = {};
 
@@ -88,8 +88,12 @@ const findAll = async (req, res, next) => {
         { title: { $regex: search, $options: "i" } },
         { location: { $regex: search, $options: "i" } },
         { description: { $regex: search, $options: "i" } },
+        { "createdBy.firstName": { $regex: search, $options: "i" } },
+        { "createdBy.lastName": { $regex: search, $options: "i" } },
       ];
     }
+
+    console.log(search, query);
 
     const events = await Event.find(query)
       .populate("createdBy", "firstName lastName")
@@ -156,9 +160,37 @@ const update = async (req, res, next) => {
       return next(new HttpError(404, "Event not found."));
     }
 
+    const totalRegisteredUsers = event.registeredUsers.length;
+
+    if (totalSeats <= 0) {
+      return next(new HttpError(400, "Total seats must be greater than 0"));
+    }
+
+    if (totalSeats < totalRegisteredUsers) {
+      return next(
+        new HttpError(
+          400,
+          "Total seats must be greater than or equal to the number of registered users"
+        )
+      );
+    }
+
+    if (remainingSeats <= 0) {
+      return next(new HttpError(400, "Remaining seats must be greater than 0"));
+    }
+
     if (remainingSeats > totalSeats) {
       return next(
         new HttpError(400, "Remaining seats cannot exceed total seats.")
+      );
+    }
+
+    if (remainingSeats < totalRegisteredUsers) {
+      return next(
+        new HttpError(
+          400,
+          "Remaining seats must not be less than the number of registered users"
+        )
       );
     }
 
@@ -195,7 +227,6 @@ const update = async (req, res, next) => {
       message: "Event updated successfully",
     });
   } catch (error) {
-    console.log(error);
     next(error);
   }
 };
@@ -225,7 +256,7 @@ const remove = async (req, res, next) => {
 };
 
 const findRegisteredUsers = async (req, res, next) => {
-  try { 
+  try {
     const id = req.body.id;
     const page = parseInt(req.body.page) || 1;
     const pageSize = parseInt(req.body.pageSize) || 10;
@@ -238,16 +269,20 @@ const findRegisteredUsers = async (req, res, next) => {
 
     const event = await Event.findById(id).populate({
       path: "registeredUsers",
-      match: search ? { $or: [
-        { firstName: { $regex: search, $options: "i" } },
-        { lastName: { $regex: search, $options: "i" } },
-        { phone: { $regex: search, $options: "i" } }
-      ]} : {},
+      match: search
+        ? {
+            $or: [
+              { firstName: { $regex: search, $options: "i" } },
+              { lastName: { $regex: search, $options: "i" } },
+              { phone: { $regex: search, $options: "i" } },
+            ],
+          }
+        : {},
       options: {
         limit: pageSize,
-        skip: skip
+        skip: skip,
       },
-      select: "firstName lastName phone"
+      select: "firstName lastName phone",
     });
 
     if (!event) {
@@ -257,19 +292,34 @@ const findRegisteredUsers = async (req, res, next) => {
     const total = await Event.aggregate([
       { $match: { _id: new mongoose.Types.ObjectId(id) } },
       { $unwind: "$registeredUsers" },
-      { $lookup: {
-        from: "users",
-        localField: "registeredUsers",
-        foreignField: "_id",
-        as: "registeredUsers"
-      }},
+      {
+        $lookup: {
+          from: "users",
+          localField: "registeredUsers",
+          foreignField: "_id",
+          as: "registeredUsers",
+        },
+      },
       { $unwind: "$registeredUsers" },
-      { $match: search ? { $or: [
-        { "registeredUsers.firstName": { $regex: search, $options: "i" } },
-        { "registeredUsers.lastName": { $regex: search, $options: "i" } },
-        { "registeredUsers.phone": { $regex: search, $options: "i" } }
-      ]} : {}},
-      { $count: "total" }
+      {
+        $match: search
+          ? {
+              $or: [
+                {
+                  "registeredUsers.firstName": {
+                    $regex: search,
+                    $options: "i",
+                  },
+                },
+                {
+                  "registeredUsers.lastName": { $regex: search, $options: "i" },
+                },
+                { "registeredUsers.phone": { $regex: search, $options: "i" } },
+              ],
+            }
+          : {},
+      },
+      { $count: "total" },
     ]);
 
     res.status(200).json({
