@@ -178,10 +178,6 @@ const update = async (req, res, next) => {
       );
     }
 
-    if (remainingSeats <= 0) {
-      return next(new HttpError(400, "Remaining seats must be greater than 0"));
-    }
-
     if (remainingSeats > totalSeats) {
       return next(
         new HttpError(400, "Remaining seats cannot exceed total seats.")
