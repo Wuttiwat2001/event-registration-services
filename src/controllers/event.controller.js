@@ -145,13 +145,8 @@ const findOne = async (req, res, next) => {
 const update = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const {
-      title,
-      description,
-      location,
-      totalSeats,
-      remainingSeats,
-    } = req.body;
+    const { title, description, location, totalSeats, remainingSeats } =
+      req.body;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return next(new HttpError(400, "Invalid event ID"));
@@ -260,22 +255,32 @@ const findRegisteredUsers = async (req, res, next) => {
     const pageSize = parseInt(req.body.pageSize) || 10;
     const skip = (page - 1) * pageSize;
     const search = req.body.search;
+    const joinDateStart = req.body.joinDateStart
+      ? new Date(req.body.joinDateStart)
+      : null;
+    const joinDateEnd = req.body.joinDateEnd
+      ? new Date(req.body.joinDateEnd)
+      : null;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return next(new HttpError(400, "Invalid event ID"));
     }
 
+    const match = {};
+    if (search) {
+      match.$or = [
+        { firstName: { $regex: search, $options: "i" } },
+        { lastName: { $regex: search, $options: "i" } },
+        { phone: { $regex: search, $options: "i" } },
+      ];
+    }
+    if (joinDateStart && joinDateEnd) {
+      match.joinDate = { $gte: joinDateStart, $lte: joinDateEnd };
+    }
+
     const event = await Event.findById(id).populate({
-      path: "registeredUsers",
-      match: search
-        ? {
-            $or: [
-              { firstName: { $regex: search, $options: "i" } },
-              { lastName: { $regex: search, $options: "i" } },
-              { phone: { $regex: search, $options: "i" } },
-            ],
-          }
-        : {},
+      path: "registeredUsers.user",
+      match: match,
       options: {
         limit: pageSize,
         skip: skip,
@@ -293,29 +298,14 @@ const findRegisteredUsers = async (req, res, next) => {
       {
         $lookup: {
           from: "users",
-          localField: "registeredUsers",
+          localField: "registeredUsers.user",
           foreignField: "_id",
-          as: "registeredUsers",
+          as: "registeredUsers.user",
         },
       },
-      { $unwind: "$registeredUsers" },
+      { $unwind: "$registeredUsers.user" },
       {
-        $match: search
-          ? {
-              $or: [
-                {
-                  "registeredUsers.firstName": {
-                    $regex: search,
-                    $options: "i",
-                  },
-                },
-                {
-                  "registeredUsers.lastName": { $regex: search, $options: "i" },
-                },
-                { "registeredUsers.phone": { $regex: search, $options: "i" } },
-              ],
-            }
-          : {},
+        $match: match,
       },
       { $count: "total" },
     ]);
@@ -334,4 +324,55 @@ const findRegisteredUsers = async (req, res, next) => {
   }
 };
 
-export { create, findAll, findOne, update, remove, findRegisteredUsers };
+const joinEvent = async (req, res, next) => {
+  try {
+    const { eventId } = req.params;
+    const userId = req.user.id;
+
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      return next(new HttpError(400, "Invalid event ID"));
+    }
+
+    const event = await Event.findById(eventId);
+
+    if (!event) {
+      return next(new HttpError(404, "Event not found"));
+    }
+
+    if (event.remainingSeats <= 0) {
+      return next(new HttpError(400, "Event is full"));
+    }
+
+    const isAlreadyRegistered = event.registeredUsers.some(
+      (user) => user.user.toString() === userId
+    );
+
+    if (isAlreadyRegistered) {
+      return next(
+        new HttpError(400, "User is already registered for this event")
+      );
+    }
+
+    event.registeredUsers.push({ user: userId });
+    event.remainingSeats -= 1;
+
+    await event.save();
+
+    res.status(200).json({
+      success: true,
+      message: "User successfully joined the event",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export {
+  create,
+  findAll,
+  findOne,
+  update,
+  remove,
+  findRegisteredUsers,
+  joinEvent,
+};

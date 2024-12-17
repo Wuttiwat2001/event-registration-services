@@ -6,6 +6,7 @@ import {
   update,
   remove,
   findRegisteredUsers,
+  joinEvent
 } from "../controllers/event.controller.js";
 import validateResult from "../middlewares/validation.middleware.js";
 import {
@@ -18,8 +19,8 @@ const eventRouter = Router();
 eventRouter.post("/", validateResult, validateCreate, create);
 eventRouter.post("/findAll", findAll);
 eventRouter.post("/registered-users", findRegisteredUsers);
+eventRouter.post("/join/:eventId", joinEvent);
 eventRouter.get("/:id", findOne);
 eventRouter.put("/update/:id", validateResult, validateUpdate, update);
 eventRouter.delete("/remove/:id", remove);
-
 export default eventRouter;
