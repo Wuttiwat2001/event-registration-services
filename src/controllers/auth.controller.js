@@ -29,6 +29,7 @@ const loginUser = async (req, res, next) => {
         firstName: user.firstName,
         lastName: user.lastName,
         phone: user.phone,
+        roles: user.roles,
       },
       message: "User logged in successfully",
     });
@@ -39,7 +40,7 @@ const loginUser = async (req, res, next) => {
 
 const registerUser = async (req, res, next) => {
   try {
-    const { username, password, firstName, lastName, phone } = req.body;
+    const { username, password, firstName, lastName, phone, roles } = req.body;
 
     const existingUser = await User.findOne({
       $or: [{ username }, { phone }],
@@ -47,10 +48,10 @@ const registerUser = async (req, res, next) => {
 
     if (existingUser) {
       if (existingUser.username === username) {
-        throw new HttpError(400, "Username already exists");
+        return next(new HttpError(400, "Username already exists"));
       }
       if (existingUser.phone === phone) {
-        throw new HttpError(400, "Phone number already exists");
+        return next(new HttpError(400, "Phone number already exists"));
       }
     }
 
@@ -63,6 +64,7 @@ const registerUser = async (req, res, next) => {
       firstName,
       lastName,
       phone,
+      roles: roles || ["USER"],
     });
 
     const user = await newUser.save();
