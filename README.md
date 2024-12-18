@@ -11,34 +11,43 @@ This project is a backend service for managing event registrations. It is built 
 
 ### Installation
 
-1. ### Clone the repository:
+1. #### Clone the repository:
 
+```bash
 git clone https://github.com/Wuttiwat2001/event-registration-services
+```
 
-2. ### Install dependencies:
+2. #### Install dependencies:
 
-- npm install
+```bash
+npm run install
+```
 
-3. ### Set up the environment variables:
+3. #### Set up the environment variables:
    Create a .env file in the root directory and add the following variables:
 
-- PORT=8080
-- MONGODB_URI=mongodb://root:example@mongodb:27017/event_registration?authSource=admin
-- JWT_SECRET=your_jwt_secret
+```bash
+PORT=8080
+MONGODB_URI=mongodb://root:example@mongodb:27017/event_registration?authSource=admin
+JWT_SECRET=your_jwt_secret
+```
 
-## Usage
-1. ### Start the development server:
+### Usage
 
-- npm run serve
+1. #### Start the development server:
 
-## API Endpoints
+```bash
+npm run serve
+```
 
-### Auth Endpoints
+### API Endpoints
+
+#### Auth Endpoints
 
 - POST /auth/register - Register a new user
 - POST /auth/login - Login
 
-### Event Endpoints
+#### Event Endpoints
 
 - POST /api/events - Create a new event
 - POST /api/events/findAll - Find all events
@@ -48,32 +57,37 @@ git clone https://github.com/Wuttiwat2001/event-registration-services
 - POST /api/events/registered-users - Find registered users for an event
 - POST /api/events/join/:eventId - Join an event
 
-## Environment Variables
+#### Environment Variables
 
 - PORT - The port number on which the server will run (default is 8080)
 - MONGODB_URI - The URI of your MongoDB database
 - JWT_SECRET - The secret key for JWT authentication
 
-## Running with Docker Compose
+### Running with Docker Compose
 
-1. ### Create a .env file in the root directory and add the following variables:
+1. #### Create a .env file in the root directory and add the following variables:
 
-- PORT=8080
-- MONGODB_URI=mongodb://root:example@mongodb:27017/event_registration?authSource=admin
-- JWT_SECRET=your_jwt_secret
+```bash
+PORT=8080
+MONGODB_URI=mongodb://root:example@mongodb:27017/event_registration?authSource=admin
+JWT_SECRET=your_jwt_secret
+```
 
-2. ### Run the application using Docker Compose:
+2. #### Run the application using Docker Compose:
 
 - docker-compose up --build
 
-3. ### If the database is not accessible, ensure the MONGODB_URI in the .env file is correct and points to the MongoDB service in Docker Compose:
+3. #### If the database is not accessible, ensure the MONGODB_URI in the .env file is correct and points to the MongoDB service in Docker Compose:
 
-- MONGODB_URI=mongodb://root:example@mongodb:27017/event_registration?authSource=admin
+```bash
+MONGODB_URI=mongodb://root:example@mongodb:27017/event_registration?authSource=admin
+```
 
-## Example Requests
+### Example Requests
 
-### Register a new user
+#### Register a new user
 
+```bash
 curl -X POST http://localhost:8080/auth/register -H "Content-Type: application/json" -d '{
   "username": "testuser",
   "password": "password123",
@@ -81,9 +95,11 @@ curl -X POST http://localhost:8080/auth/register -H "Content-Type: application/j
   "lastName": "User",
   "phone": "1234567890"
 }'
+```
 
-### Create a new event
+#### Create a new event
 
+```bash
 curl -X POST http://localhost:8080/api/events -H "Content-Type: application/json" -d '{
   "title": "Sample Event",
   "description": "This is a sample event.",
@@ -92,3 +108,4 @@ curl -X POST http://localhost:8080/api/events -H "Content-Type: application/json
   "remainingSeats": 100,
   "createdBy": "userId"
 }'
+```
