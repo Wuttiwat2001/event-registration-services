@@ -1,15 +1,16 @@
 services:
   event-registration-services:
+    build: .
     container_name: event-registration-services
-    image: node:latest
+    env_file:
+      - .env
     ports:
-      - "3000:3000"
-    environment:
-      - PORT=3000
-    volumes:
-      - .:/app
+      - "8080:8080"
+    depends_on: 
+      - mongodb
+    networks:
+      - event-registration-network
     command: npm start
-
   mongodb:
     image: mongo:latest
     container_name: mongodb
@@ -21,9 +22,14 @@ services:
       MONGO_INITDB_DATABASE: event_registration
     volumes: 
       - data_event_registration:/data/db
+    networks:
+      - event-registration-network
 volumes:
   data_event_registration:
     driver: local
+networks:
+  event-registration-network:
+    driver: bridge
  
  
     
