@@ -58,13 +58,13 @@ const findAll = async (req, res, next) => {
     const createdAtDate = req.body.createdAtDate || [];
     const updatedAtDate = req.body.updatedAtDate || [];
 
-    const query = {};
+    const matchQuery = {};
 
     if (availableSeats) {
       if (availableSeats === "full") {
-        query.remainingSeats = 0;
+        matchQuery.remainingSeats = 0;
       } else if (availableSeats === "available") {
-        query.remainingSeats = { $gt: 0 };
+        matchQuery.remainingSeats = { $gt: 0 };
       }
     }
 
@@ -73,7 +73,7 @@ const findAll = async (req, res, next) => {
       createdAtStart.setHours(0, 0, 0, 0);
       const createdAtEnd = new Date(createdAtDate[1]);
       createdAtEnd.setHours(23, 59, 59, 999);
-      query.createdAt = {
+      matchQuery.createdAt = {
         $gte: createdAtStart,
         $lt: createdAtEnd,
       };
@@ -84,43 +84,102 @@ const findAll = async (req, res, next) => {
       updatedAtStart.setHours(0, 0, 0, 0);
       const updatedAtEnd = new Date(updatedAtDate[1]);
       updatedAtEnd.setHours(23, 59, 59, 999);
-      query.updatedAt = {
+      matchQuery.updatedAt = {
         $gte: updatedAtStart,
         $lt: updatedAtEnd,
       };
     }
 
-    if (search) {
-      query.$or = [
-        { title: { $regex: search, $options: "i" } },
-        { location: { $regex: search, $options: "i" } },
-        { description: { $regex: search, $options: "i" } },
-        { "createdBy.firstName": { $regex: search, $options: "i" } },
-        { "createdBy.lastName": { $regex: search, $options: "i" } },
-      ];
-    }
+    const pipeline = [
+      {
+        $lookup: {
+          from: "users",
+          localField: "createdBy",
+          foreignField: "_id",
+          as: "createdBy",
+        },
+      },
+      {
+        $unwind: "$createdBy",
+      },
+      {
+        $match: {
+          ...matchQuery,
+          ...(search
+            ? {
+                $or: [
+                  { title: { $regex: search, $options: "i" } },
+                  { location: { $regex: search, $options: "i" } },
+                  { description: { $regex: search, $options: "i" } },
+                  { "createdBy.firstName": { $regex: search, $options: "i" } },
+                  { "createdBy.lastName": { $regex: search, $options: "i" } },
+                ],
+              }
+            : {}),
+        },
+      },
+      {
+        $sort: { createdAt: -1 },
+      },
+      {
+        $skip: skip,
+      },
+      {
+        $limit: pageSize,
+      },
+    ];
 
-    const events = await Event.find(query)
-      .populate("createdBy", "firstName lastName")
-      .sort({ createdAt: -1 })
-      .limit(pageSize)
-      .skip(skip);
+    const events = await Event.aggregate(pipeline);
 
-    const total = await Event.countDocuments(query);
+    const total = await Event.aggregate([
+      {
+        $lookup: {
+          from: "users",
+          localField: "createdBy",
+          foreignField: "_id",
+          as: "createdBy",
+        },
+      },
+      {
+        $unwind: "$createdBy",
+      },
+      {
+        $match: {
+          ...matchQuery,
+          ...(search
+            ? {
+                $or: [
+                  { title: { $regex: search, $options: "i" } },
+                  { location: { $regex: search, $options: "i" } },
+                  { description: { $regex: search, $options: "i" } },
+                  { "createdBy.firstName": { $regex: search, $options: "i" } },
+                  { "createdBy.lastName": { $regex: search, $options: "i" } },
+                ],
+              }
+            : {}),
+        },
+      },
+      {
+        $count: "total",
+      },
+    ]);
+
+    const totalCount = total.length > 0 ? total[0].total : 0;
 
     res.status(200).json({
       success: true,
       data: events,
       pagination: {
-        total,
+        total: totalCount,
         page,
-        pages: Math.ceil(total / pageSize),
+        pages: Math.ceil(totalCount / pageSize),
       },
     });
   } catch (error) {
     next(error);
   }
 };
+
 
 const findOne = async (req, res, next) => {
   try {
