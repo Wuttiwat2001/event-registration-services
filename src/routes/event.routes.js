@@ -6,21 +6,49 @@ import {
   update,
   remove,
   findRegisteredUsers,
-  joinEvent
+  joinEvent,
 } from "../controllers/event.controller.js";
 import validateResult from "../middlewares/validation.middleware.js";
 import {
   validateCreate,
   validateUpdate,
 } from "../validators/event.validator.js";
+import {
+  authMiddleware,
+  authorizeMiddleware,
+} from "../middlewares/auth.middleware.js";
 
 const eventRouter = Router();
 
-eventRouter.post("/", validateResult, validateCreate, create);
+eventRouter.post(
+  "/",
+  authMiddleware,
+  authorizeMiddleware(["ADMIN"]),
+  validateResult,
+  validateCreate,
+  create
+);
 eventRouter.post("/findAll", findAll);
 eventRouter.post("/registered-users", findRegisteredUsers);
-eventRouter.post("/join/:eventId", joinEvent);
+eventRouter.post(
+  "/join/:eventId",
+  authMiddleware,
+  authorizeMiddleware(["ADMIN", "USER"]),
+  joinEvent
+);
 eventRouter.get("/:id", findOne);
-eventRouter.put("/update/:id", validateResult, validateUpdate, update);
-eventRouter.delete("/remove/:id", remove);
+eventRouter.put(
+  "/update/:id",
+  authMiddleware,
+  authorizeMiddleware(["ADMIN"]),
+  validateResult,
+  validateUpdate,
+  update
+);
+eventRouter.delete(
+  "/remove/:id",
+  authMiddleware,
+  authorizeMiddleware(["ADMIN"]),
+  remove
+);
 export default eventRouter;
