@@ -57,6 +57,14 @@ npm run serve
 - POST /api/events/registered-users - Find registered users for an event
 - POST /api/events/join/:eventId - Join an event
 
+### If want design to microservice
+
+- Auth Service - /auth/register, /auth/login
+- Event Service - /api/events, /api/events/findAll, /api/events/:id, /api/events/update/:id, /api/events/remove/:id
+- Register Service - /api/events/join/:eventId, /api/events/registered-users
+- User Service (Optional)
+- Notification Service (Optional)
+
 #### Environment Variables
 
 - PORT - The port number on which the server will run (default is 8080)
