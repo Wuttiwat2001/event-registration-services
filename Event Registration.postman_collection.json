@@ -16,7 +16,7 @@
 						"header": [],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n    \"username\": \"admin\",\n    \"password\": \"12345678\",\n    \"firstName\": \"Wuttiwat\",\n    \"lastName\": \"Phoemsirikawinkun\",\n    \"phone\": \"0123456789\",\n    \"roles\": [\"ADMIN\",\"USER\"]\n}",
+							"raw": "{\n    \"username\": \"admin\",\n    \"password\": \"12345678\",\n    \"firstName\": \"Wuttiwat\",\n    \"lastName\": \"Phoemsirikawinkun\",\n    \"phone\": \"+660123456789\",\n    \"roles\": [\"ADMIN\",\"USER\"]\n}",
 							"options": {
 								"raw": {
 									"language": "json"
